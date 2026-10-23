@@ -925,7 +925,7 @@ function __OriginkitBase_CursorRingField(props: CursorRingFieldProps) {
                 height: "100%",
                 position: "relative",
                 overflow: "hidden",
-                background,
+                background: `radial-gradient(ellipse at center, #1a0a2e 0%, #0a0a14 50%, #000000 100%)`,
                 ...style,
             }}
         >

@@ -1,4 +1,4 @@
-import { useCallback } from "react"
+import { useCallback, useState, useEffect } from "react"
 import CursorRingField from "./components/CursorRingField"
 import Dock from "./components/Dock"
 import type { DockItem } from "./components/Dock"
@@ -54,6 +54,15 @@ function AppContent({ appId }: { appId: string }) {
   }
 }
 
+function CurrentTime() {
+  const [time, setTime] = useState(new Date())
+  useEffect(() => {
+    const interval = setInterval(() => setTime(new Date()), 1000)
+    return () => clearInterval(interval)
+  }, [])
+  return <>{time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</>
+}
+
 export default function App() {
   const { windows, openWindow, closeWindow, focusWindow, minimizeWindow, toggleMaximize, updateWindow } = useWindowManager()
 
@@ -75,9 +84,9 @@ export default function App() {
   }))
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-black">
+    <div className="relative h-screen w-full overflow-hidden bg-black text-white">
       {/* Particle background */}
-      <div className="fixed inset-0 z-0">
+      <div className="pointer-events-auto fixed inset-0 z-0">
         <CursorRingField
           background="#000000"
           colors={{
@@ -91,82 +100,89 @@ export default function App() {
       </div>
 
       {/* Desktop area */}
-      <div className="relative z-10 h-full w-full">
+      <div className="relative z-10 flex h-full w-full flex-col">
         {/* Top bar */}
-        <div className="flex h-8 items-center justify-between border-b border-white/5 bg-black/30 px-4 backdrop-blur-md">
+        <div className="flex h-8 shrink-0 items-center justify-between border-b border-white/10 bg-black/50 px-4 backdrop-blur-xl">
           <div className="flex items-center gap-4">
-            <span className="text-xs font-bold text-white/80">⬡ NebulaOS</span>
-            <span className="text-[10px] text-white/30">|</span>
-            <span className="text-[10px] text-white/40">
+            <span className="text-xs font-bold text-white/90">⬡ NebulaOS</span>
+            <span className="text-[10px] text-white/20">|</span>
+            <span className="text-[10px] text-white/50">
               {windows.filter((w) => !w.isMinimized).length} window{windows.filter((w) => !w.isMinimized).length !== 1 ? "s" : ""} open
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-[10px] text-white/30">
-              {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            <span className="text-[10px] text-white/40">
+              <CurrentTime />
             </span>
             <div className="flex items-center gap-1">
               <div className="h-1.5 w-1.5 rounded-full bg-green-400" />
-              <span className="text-[10px] text-white/40">Connected</span>
+              <span className="text-[10px] text-white/50">Online</span>
             </div>
           </div>
         </div>
 
-        {/* Welcome screen when no windows open */}
-        {windows.length === 0 && (
-          <div className="flex h-[calc(100%-80px)] flex-col items-center justify-center px-6 text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 backdrop-blur-sm">
-              <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-xs font-medium text-white/80">System Ready</span>
-            </div>
-            <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight md:text-6xl">
-              <span className="bg-gradient-to-r from-white via-white/90 to-white/70 bg-clip-text text-transparent">
-                Your AI
-              </span>
-              <br />
-              <span className="bg-gradient-to-r from-red-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
-                Workspace
-              </span>
-            </h1>
-            <p className="mt-4 max-w-md text-sm text-white/50">
-              Open apps from the dock below. Move your cursor to interact with the particle field.
-            </p>
+        {/* Desktop content */}
+        <div className="relative flex-1">
+          {/* Welcome screen when no windows open */}
+          {windows.length === 0 && (
+            <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-1.5 backdrop-blur-md">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
+                <span className="text-xs font-medium text-white/80">System Ready</span>
+              </div>
+              <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight md:text-6xl">
+                <span className="bg-gradient-to-r from-white via-white/90 to-white/70 bg-clip-text text-transparent">
+                  Your AI
+                </span>
+                <br />
+                <span className="bg-gradient-to-r from-red-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
+                  Workspace
+                </span>
+              </h1>
+              <p className="mt-4 max-w-md text-sm text-white/60">
+                Open apps from the dock below or quick launch. Move your cursor to interact with the particle field.
+              </p>
 
-            {/* Quick launch */}
-            <div className="mt-8 grid grid-cols-5 gap-3">
-              {Object.entries(APP_CONFIG).map(([id, config]) => (
-                <button
-                  key={id}
-                  onClick={() => handleDockClick(id)}
-                  className="group flex flex-col items-center gap-2 rounded-xl border border-white/5 bg-white/5 p-4 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10"
-                >
-                  <span className="text-2xl transition group-hover:scale-110">{config.icon}</span>
-                  <span className="text-[10px] font-medium text-white/60 group-hover:text-white/80">{config.title}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+              {/* Quick launch */}
+              <div className="mt-10 grid grid-cols-5 gap-4">
+                {Object.entries(APP_CONFIG).map(([id, config]) => (
+                  <button
+                    key={id}
+                    onClick={() => handleDockClick(id)}
+                    className="group flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md transition-all hover:scale-105 hover:border-white/30 hover:bg-white/10"
+                  >
+                    <span className="text-3xl transition group-hover:scale-110">{config.icon}</span>
+                    <span className="text-xs font-medium text-white/70 group-hover:text-white">{config.title}</span>
+                  </button>
+                ))}
+              </div>
 
-        {/* Windows */}
-        {windows.map((win) => (
-          <Window
-            key={win.appId}
-            window={win}
-            onClose={() => closeWindow(win.appId)}
-            onFocus={() => focusWindow(win.appId)}
-            onMinimize={() => minimizeWindow(win.appId)}
-            onToggleMaximize={() => toggleMaximize(win.appId)}
-            onUpdate={(updates) => updateWindow(win.appId, updates)}
-            icon={<span>{APP_CONFIG[win.appId as keyof typeof APP_CONFIG]?.icon}</span>}
-          >
-            <AppContent appId={win.appId} />
-          </Window>
-        ))}
+              <p className="mt-8 text-xs text-white/30">
+                ↑ Click an app to open it • Drag windows to reposition • Resize from edges
+              </p>
+            </div>
+          )}
+
+          {/* Windows */}
+          {windows.map((win) => (
+            <Window
+              key={win.appId}
+              window={win}
+              onClose={() => closeWindow(win.appId)}
+              onFocus={() => focusWindow(win.appId)}
+              onMinimize={() => minimizeWindow(win.appId)}
+              onToggleMaximize={() => toggleMaximize(win.appId)}
+              onUpdate={(updates) => updateWindow(win.appId, updates)}
+              icon={<span>{APP_CONFIG[win.appId as keyof typeof APP_CONFIG]?.icon}</span>}
+            >
+              <AppContent appId={win.appId} />
+            </Window>
+          ))}
+        </div>
       </div>
 
       {/* Dock */}
-      <div className="relative z-20">
+      <div className="relative z-50">
         <Dock items={dockItems} onItemClick={handleDockClick} />
       </div>
     </div>
